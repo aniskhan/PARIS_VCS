@@ -1,41 +1,39 @@
 Attribute VB_Name = "VCS_Reference"
 Option Compare Database
 
-Option Private Module
 Option Explicit
 
+Const ForReading = 1, ForWriting = 2, ForAppending = 8
+Const TristateTrue = -1, TristateFalse = 0, TristateUseDefault = -2
 
 ' Import References from a CSV, true=SUCCESS
-Public Function ImportReferences(ByVal obj_path As String) As Boolean
-    Dim FSO As Object
-    Dim InFile As Object
+Public Function ImportReferences(obj_path As String) As Boolean
+    Dim FSO, InFile
     Dim line As String
-    Dim item() As String
+    Dim Item() As String
     Dim GUID As String
     Dim Major As Long
     Dim Minor As Long
     Dim fileName As String
     Dim refName As String
-    
-    fileName = Dir$(obj_path & "references.csv")
+    fileName = Dir(obj_path & "references.csv")
     If Len(fileName) = 0 Then
         ImportReferences = False
         Exit Function
     End If
     Set FSO = CreateObject("Scripting.FileSystemObject")
-    Set InFile = FSO.OpenTextFile(obj_path & fileName, iomode:=ForReading, create:=False, Format:=TristateFalse)
-    
+    Set InFile = FSO.OpenTextFile(obj_path & fileName, ForReading)
 On Error GoTo failed_guid
     Do Until InFile.AtEndOfStream
         line = InFile.ReadLine
-        item = Split(line, ",")
-        If UBound(item) = 2 Then 'a ref with a guid
-          GUID = Trim$(item(0))
-          Major = CLng(item(1))
-          Minor = CLng(item(2))
+        Item = Split(line, ",")
+        If UBound(Item) = 2 Then 'a ref with a guid
+          GUID = Trim(Item(0))
+          Major = CLng(Item(1))
+          Minor = CLng(Item(2))
           Application.References.AddFromGuid GUID, Major, Minor
         Else
-          refName = Trim$(item(0))
+          refName = Trim(Item(0))
           Application.References.AddFromFile refName
         End If
 go_on:
@@ -46,7 +44,6 @@ On Error GoTo 0
     Set FSO = Nothing
     ImportReferences = True
     Exit Function
-    
 failed_guid:
     If Err.Number = 32813 Then
         'The reference is already present in the access project - so we can ignore the error
@@ -60,16 +57,15 @@ failed_guid:
 End Function
 
 ' Export References to a CSV
-Public Sub ExportReferences(ByVal obj_path As String)
-    Dim FSO As Object
-    Dim OutFile As Object
+Public Sub ExportReferences(obj_path As String)
+    Dim FSO, OutFile
     Dim line As String
     Dim ref As Reference
 
     Set FSO = CreateObject("Scripting.FileSystemObject")
-    Set OutFile = FSO.CreateTextFile(obj_path & "references.csv", overwrite:=True, Unicode:=False)
+    Set OutFile = FSO.CreateTextFile(obj_path & "references.csv", True)
     For Each ref In Application.References
-        If ref.GUID <> vbNullString Then ' references of types mdb,accdb,mde etc don't have a GUID
+        If ref.GUID > "" Then ' references of types mdb,accdb,mde etc don't have a GUID
             If Not ref.BuiltIn Then
                 line = ref.GUID & "," & CStr(ref.Major) & "," & CStr(ref.Minor)
                 OutFile.WriteLine line

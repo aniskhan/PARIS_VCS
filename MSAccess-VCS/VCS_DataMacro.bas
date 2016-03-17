@@ -1,20 +1,13 @@
 Attribute VB_Name = "VCS_DataMacro"
 Option Compare Database
 
-Option Private Module
 Option Explicit
 
 
-' For Access 2007 (VBA6) and earlier
-#If Not VBA7 Then
-  Private Const acTableDataMacro As Integer = 12
-#End If
+Public Sub ExportDataMacros(tableName As String, directory As String)
+    On Error GoTo Err_export:
 
-Public Sub ExportDataMacros(ByVal tableName As String, ByVal directory As String)
-    On Error GoTo Err_export
-    Dim filePath As String
-    
-    filePath = directory & tableName & ".xml"
+    Dim filePath As String: filePath = directory & tableName & ".xml"
 
     VCS_IE_Functions.ExportObject acTableDataMacro, tableName, filePath, VCS_File.UsingUcs2
     FormatDataMacro filePath
@@ -22,25 +15,22 @@ Public Sub ExportDataMacros(ByVal tableName As String, ByVal directory As String
     Exit Sub
 
 Err_export:
-    ' Error to export dataMacro, no contains dataMacro. Do nothing
+    
+    
 End Sub
 
-Public Sub ImportDataMacros(ByVal tableName As String, ByVal directory As String)
-    On Error GoTo Err_import
-    Dim filePath As String
-    
-    filePath = directory & tableName & ".xml"
+Public Sub ImportDataMacros(tableName As String, directory As String)
+    On Error GoTo Err_import:
+    Dim filePath As String: filePath = directory & tableName & ".xml"
     VCS_IE_Functions.ImportObject acTableDataMacro, tableName, filePath, VCS_File.UsingUcs2
-    
-    Exit Sub
-    
+
 Err_import:
-    ' Error to import dataMacro. Do nothing
+    
 End Sub
 
 'Splits exported DataMacro XML onto multiple lines
 'Allows git to find changes within lines using diff
-Private Sub FormatDataMacro(ByVal filePath As String)
+Private Sub FormatDataMacro(filePath As String)
 
     Dim saveStream As Object 'ADODB.Stream
 
@@ -64,7 +54,7 @@ Private Sub FormatDataMacro(ByVal filePath As String)
         Dim tag As Variant
         
         For Each tag In Split(strData, ">")
-            If tag <> vbNullString Then
+            If tag <> "" Then
                 saveStream.WriteText tag & ">", 1 'adWriteLine
             End If
         Next
@@ -76,3 +66,15 @@ Private Sub FormatDataMacro(ByVal filePath As String)
     saveStream.Close
 
 End Sub
+
+
+
+
+
+
+
+
+
+
+
+
