@@ -2,17 +2,22 @@ Attribute VB_Name = "VCS_ImportExport"
 Option Compare Database
 
 Option Explicit
-
 ' List of lookup tables that are part of the program rather than the
 ' data, to be exported with source code
 ' Set to "*" to export the contents of all tables
 'Only used in ExportAllSource
-Private Const INCLUDE_TABLES As String = ""
+
+'*** PARIS MOD --  wildcard filtered to export lookup tables, hash tables and tblReviewTypes
+Private Const INCLUDE_TABLES = "*"
 ' This is used in ImportAllSource
-Private Const DebugOutput As Boolean = False
+Private Const DebugOutput = False
 'this is used in ExportAllSource
 'Causes the VCS_ code to be exported
-Private Const ArchiveMyself As Boolean = False
+Private Const ArchiveMyself = False
+
+' Constants for Scripting.FileSystemObject API
+Const ForReading = 1, ForWriting = 2, ForAppending = 8
+Const TristateTrue = -1, TristateFalse = 0, TristateUseDefault = -2
 
 
 'returns true if named module is NOT part of the VCS code
@@ -152,16 +157,21 @@ Public Sub ExportAllSource()
         ' This is not a system table
         ' this is not a temporary table
         If Left$(td.name, 4) <> "MSys" And _
-        Left$(td.name, 1) <> "~" Then
+        Left(td.name, 1) <> "~" And _
+        td.name <> "tblSubRecipient" Then 'PARIS MOD: Removed this tbl b/c its tabledef throws an error ...too many ORDER BY statements
             If Len(td.connect) = 0 Then ' this is not an external table
                 VCS_Table.ExportTableDef Db, td, td.name, obj_path
-                If INCLUDE_TABLES = "*" Then
+                If INCLUDE_TABLES = "*" And _
+                Left(td.name, 2) = "lu" Or _
+                Left(td.name, 4) = "hash" Or _
+                td.name = "tblReviewTypes" Then
+                ' PARIS MOD: filtering just to lu/hash/tblReviewTypes for export
                     DoEvents
                     VCS_Table.ExportTableData CStr(td.name), source_path & "tables\"
-                    If Len(Dir$(source_path & "tables\" & td.name & ".txt")) > 0 Then
+                    If Len(Dir(source_path & "tables\" & td.name & ".txt")) > 0 Then
                         obj_data_count = obj_data_count + 1
                     End If
-                ElseIf (Len(Replace(INCLUDE_TABLES, " ", vbNullString)) > 0) And INCLUDE_TABLES <> "*" Then
+                ElseIf (Len(Replace(INCLUDE_TABLES, " ", "")) > 0) And INCLUDE_TABLES <> "*" Then
                     DoEvents
                     On Error GoTo Err_TableNotFound
                     If IncludeTablesCol(td.name) = td.name Then
@@ -560,3 +570,4 @@ Public Function StrSetToCol(ByVal strSet As String, ByVal delimiter As String) A
     
     Set StrSetToCol = col
 End Function
+
