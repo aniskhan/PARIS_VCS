@@ -212,7 +212,7 @@ End Sub
 ' Main entry point for IMPORT. Import all forms, reports, queries,
 ' macros, modules, and lookup tables from `source` folder under the
 ' database's folder.
-Public Sub ImportAllSource()
+Public Sub ImportAllSource(keepTableData As Boolean)
     Dim Db As Object ' DAO.Database
     Dim FSO As Object
     Dim source_path As String
@@ -267,7 +267,11 @@ Public Sub ImportAllSource()
     End If
     
     VCS_Dir.DelIfExist tempFilePath
+'PARISMOD:
 
+Select Case keepTableData:
+    Case True: ' Don't import defs or tables
+    Case False:
     ' restore table definitions
     obj_path = source_path & "tbldef\"
     fileName = Dir(obj_path & "*.sql")
@@ -339,7 +343,7 @@ Public Sub ImportAllSource()
         Do Until Len(fileName) = 0
             DoEvents
             obj_name = Mid(fileName, 1, InStrRev(fileName, ".") - 1)
-            'VCS_Table.ImportTableData CStr(obj_name), obj_path
+            VCS_Table.ImportTableData CStr(obj_name), obj_path
             VCS_DataMacro.ImportDataMacros obj_name, obj_path
             obj_count = obj_count + 1
             fileName = Dir()
@@ -347,7 +351,7 @@ Public Sub ImportAllSource()
         Debug.Print "[" & obj_count & "]"
     End If
     
-
+End Select
         'import Data Macros
     
 
@@ -428,21 +432,21 @@ End Sub
 ' Main entry point for ImportProject.
 ' Drop all forms, reports, queries, macros, modules.
 ' execute ImportAllSource.
-Public Sub ImportProject()
+Public Sub ImportProject(keepTableData As Boolean)
 On Error GoTo ErrorHandler
 
-    If MsgBox("This action will delete / replace all existing: " & vbCrLf & _
-              vbCrLf & _
-              Chr(149) & " Forms" & vbCrLf & _
-              Chr(149) & " Macros" & vbCrLf & _
-              Chr(149) & " Modules" & vbCrLf & _
-              Chr(149) & " Queries" & vbCrLf & _
-              Chr(149) & " Reports" & vbCrLf & _
-              vbCrLf & _
-              "Are you sure you want to proceed?", vbCritical + vbYesNo, _
-              "Import Project") <> vbYes Then ' PARIS MOD: removed warning about tables, as they will not be replaced
-        Exit Sub
-    End If
+'    If MsgBox("This action will delete / replace all existing: " & vbCrLf & _
+'              vbCrLf & _
+'              Chr(149) & " Forms" & vbCrLf & _
+'              Chr(149) & " Macros" & vbCrLf & _
+'              Chr(149) & " Modules" & vbCrLf & _
+'              Chr(149) & " Queries" & vbCrLf & _
+'              Chr(149) & " Reports" & vbCrLf & _
+'              vbCrLf & _
+'              "Are you sure you want to proceed?", vbCritical + vbYesNo, _
+'              "Import Project") <> vbYes Then ' PARIS MOD: removed warning about tables, as they will not be replaced
+'        Exit Sub
+'    End If
 
     Dim Db As DAO.Database
     Set Db = CurrentDb
@@ -468,14 +472,21 @@ On Error GoTo ErrorHandler
         End If
     Next
     
-    'Dim td As DAO.TableDef
-    ''PARIS MOD: no tabledefs deleted
-'    For Each td In CurrentDb.TableDefs
-'        If Left$(td.name, 4) <> "MSys" And _
-'            Left(td.name, 1) <> "~" Then
-'            CurrentDb.TableDefs.Delete (td.name)
-'        End If
-'    Next
+    Dim td As DAO.TableDef
+    
+        Select Case keepTableData
+            Case True: 'PARISMOD: do not delete tabledefs
+            Case False:
+            'PARIS MOD: no tabledefs deleted
+                For Each td In CurrentDb.TableDefs
+                    If Left$(td.name, 4) <> "MSys" And _
+                        Left(td.name, 1) <> "~" Then
+                            CurrentDb.TableDefs.Delete (td.name)
+                    End If
+                Next
+        End Select
+    
+
 
     Dim objType As Variant
     Dim objTypeArray() As String
@@ -506,7 +517,7 @@ On Error GoTo ErrorHandler
     
     Debug.Print "================="
     Debug.Print "Importing Project"
-    ImportAllSource
+    ImportAllSource (keepTableData)
     GoTo exitHandler
 
 ErrorHandler:
@@ -559,6 +570,7 @@ Next
 Set StrSetToCol = col
 
 End Function
+
 
 
 
