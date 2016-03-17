@@ -333,7 +333,7 @@ Select Case keepTableData:
         Loop
         Debug.Print "[" & obj_count & "]"
     End If
-    
+End Select
     'load Data Macros - not DRY!
     obj_path = source_path & "tbldef\"
     fileName = Dir(obj_path & "*.xml")
@@ -351,7 +351,7 @@ Select Case keepTableData:
         Debug.Print "[" & obj_count & "]"
     End If
     
-End Select
+
         'import Data Macros
     
 
