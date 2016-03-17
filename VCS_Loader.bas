@@ -41,7 +41,7 @@ Fin_DirCheck:
 
     GoTo Fin_DelHandler:
 Err_DelHandler:
-    If Err.Number <> 7874 Then 'is not - can't find object
+    If Err.Number <> 7874 And Err.Number <> 7873 Then 'is not - can't find object
         Debug.Print "WARNING (" & Err.Number & ") | " & Err.Description
     End If
     Resume Next
