@@ -130,6 +130,10 @@ Public Sub ExportTableDef(Db As DAO.Database, td As DAO.TableDef, ByVal tableNam
         Else
             sql = sql & strType(fi.Type) & " "
         End If
+'PARISMOD: Export default values
+        If fi.DefaultValue <> "" Then
+            sql = sql & "DEFAULT " & fi.DefaultValue
+        End If
         Select Case fi.Type
             Case dbText, dbVarBinary
                 sql = sql & "(" & fi.Size & ")"
@@ -629,3 +633,4 @@ Public Sub ImportTableData(ByVal tblName As String, ByVal obj_path As String)
     InFile.Close
     FSO.DeleteFile tempFileName
 End Sub
+
