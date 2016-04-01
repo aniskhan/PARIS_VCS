@@ -137,8 +137,13 @@ Public Sub ExportTableDef(Db As Database, td As TableDef, tableName As String, d
         End Select
         
   'PARISMOD: Export default values
+        
         If fi.DefaultValue <> "" Then
-            sql = sql & " DEFAULT " & fi.DefaultValue
+            If Right(sql, 1) = " " Then
+                sql = sql & "DEFAULT " & fi.DefaultValue
+            Else
+                sql = sql & " DEFAULT " & fi.DefaultValue
+            End If
         End If
         
         For Each idx In td.Indexes
