@@ -127,11 +127,7 @@ Public Sub ExportTableDef(Db As Database, td As TableDef, tableName As String, d
         Else
             sql = sql & strType(fi.Type) & " "
         End If
-'PARISMOD: Export default values
-        If fi.DefaultValue <> "" Then
-            sql = sql & "DEFAULT " & fi.DefaultValue
-        End If
-        
+ 
         Select Case fi.Type
             Case dbText, dbVarBinary
                 sql = sql & "(" & fi.Size & ")"
@@ -139,6 +135,12 @@ Public Sub ExportTableDef(Db As Database, td As TableDef, tableName As String, d
                 sql = sql & formatDecimal(tableName, fi.name)
             Case Else
         End Select
+        
+  'PARISMOD: Export default values
+        If fi.DefaultValue <> "" Then
+            sql = sql & " DEFAULT " & fi.DefaultValue
+        End If
+        
         For Each idx In td.Indexes
             fieldAttributeSql = ""
             If idx.Fields.Count = 1 And idx.Fields(0).name = fi.name Then
